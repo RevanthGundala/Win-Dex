@@ -103,6 +103,11 @@ contract WinFactory {
         return s_tokenPairing[tokenA][tokenB];
     }
 
+    // return the address of a specific pair at a specific index in the array
+    function getPairAtIndex(uint index) external view returns(address) {
+        return s_liquidityPool[index];
+    }
+
     // should make sure tokens are valid addresses
     function checkTokens(address tokenA, address tokenB) internal pure {
         if (tokenA == address(0)) {

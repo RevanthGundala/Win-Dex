@@ -1,5 +1,5 @@
 const { assert, expect } = require("chai");
-const { getNamedAccounts, ethers } = require("hardhat");
+const { getNamedAccounts, ethers, deployments, network } = require("hardhat");
 const { devChains, TOKEN_A, TOKEN_B } = require("../helper-hardhat-config");
 
 devChains.includes(network.name)
@@ -9,11 +9,13 @@ devChains.includes(network.name)
       beforeEach(async function () {
         const { deployer } = await getNamedAccounts();
         winFactory = await ethers.getContract("WinFactory", deployer);
+        console.log()
       });
       describe("Create New Pairing", function () {
         it("Should revert if first token is non-existent", async function () {
+
           await expect(
-            winFactory.createNewPairing(winFactory.address(0), TOKEN_B)
+            winFactory.createNewPairing(0x0, TOKEN_B)
           ).to.be.revertedWith("WinDex__ZeroAddress");
         });
         it("Should revert if second token is non-existent", async function () {
@@ -80,10 +82,13 @@ devChains.includes(network.name)
       });
       describe("Get Number of pairs", function () {
         it("should correctly get the number of pairs in the array", async function () {
-          assert(winFactory.getNumPairs().toString() == "0");
-          const pair = await winFactory.createNewPairing(TOKEN_A, TOKEN_B);
-          await pair.wait(1);
-          assert(winFactory.getNumPairs().toString() == "1");
+          // const num = await winFactory.getNumPairs();
+          // assert.equal(num.toString(), "0");
+
+          const tx = await winFactory.createNewPairing(TOKEN_A, TOKEN_B);
+          await tx.wait(1);
+          const num1 = await winFactory.getNumPairs();
+          assert.equal(num1.toString(), "1");
         });
       });
       describe("Get Pair", function () {

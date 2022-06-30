@@ -1,3 +1,4 @@
+
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require("hardhat-deploy");
@@ -23,6 +24,7 @@ module.exports = {
       url: RINKEBY_RPC_URL,
       accounts: [PRIVATE_KEY],
       chainId: 4,
+      gasLimit: 320000000000000000000000000000000000000000000000000,
     },
   },
   namedAccounts: {
@@ -30,4 +32,10 @@ module.exports = {
       default: 0,
     },
   },
+  gasReporter: {
+    enabled: false,
+    currency: "USD",
+    outputFile: "gas-report.txt",
+    nocolors: true,
+  }
 };
