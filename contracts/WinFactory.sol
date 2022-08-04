@@ -35,6 +35,13 @@ contract WinFactory {
         checkTokens(tokenA, tokenB);
         checkPairAlreadyExists(s_tokenPairing[tokenA][tokenB]);
 
+        //"https://github.com/Uniswap/v2-core"
+        //requires that first token is lower in order
+        (address token0, address token1) = tokenA < tokenB
+            ? (tokenA, tokenB)
+            : (tokenB, tokenA);
+        tokenA = token0;
+        tokenB = token1;
         // calculating the address for the pair contract
         bytes memory bytecode = type(WinPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(tokenA, tokenB));
@@ -104,7 +111,7 @@ contract WinFactory {
     }
 
     // return the address of a specific pair at a specific index in the array
-    function getPairAtIndex(uint index) external view returns(address) {
+    function getPairAtIndex(uint index) external view returns (address) {
         return s_liquidityPool[index];
     }
 

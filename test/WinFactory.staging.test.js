@@ -9,13 +9,11 @@ devChains.includes(network.name)
       beforeEach(async function () {
         const { deployer } = await getNamedAccounts();
         winFactory = await ethers.getContract("WinFactory", deployer);
-        console.log()
       });
       describe("Create New Pairing", function () {
         it("Should revert if first token is non-existent", async function () {
-
           await expect(
-            winFactory.createNewPairing(0x0, TOKEN_B)
+            winFactory.createNewPairing(ethers.constants.AddressZero, TOKEN_B)
           ).to.be.revertedWith("WinDex__ZeroAddress");
         });
         it("Should revert if second token is non-existent", async function () {
@@ -42,7 +40,6 @@ devChains.includes(network.name)
         });
         it("should correctly create the pair", async function () {
           const pair = await winFactory.createNewPairing(TOKEN_A, TOKEN_B);
-          await pair.wait(1);
           assert(pair.toString().length == 32);
         });
         it("should correctly add the pair to the array", async function () {
@@ -51,10 +48,9 @@ devChains.includes(network.name)
           assert(pair == winFactory.s_liquidityPool(0));
         });
         it("should correctly emit the pair added event", async function () {
-          await expect(
-            winFactory
-              .createNewPairing(TOKEN_A, TOKEN_B)
-              .to.emit(winFactory, "pairingCreated")
+          await expect(winFactory.createNewPairing(TOKEN_A, TOKEN_B)).to.emit(
+            winFactory,
+            "pairingCreated"
           );
         });
       });

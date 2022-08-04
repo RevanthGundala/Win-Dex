@@ -13,7 +13,7 @@ error WinPair__LiquidityProvidersExist(uint providers);
 error WinPair__InsufficientBalance(uint balance);
 error WinPair__ZeroAddress(address token);
 
-contract WinPair{
+contract WinPair {
     /* constant and immutable variables */
     uint private constant TRADING_FEE = 1;
     address private immutable i_tokenA;
@@ -28,6 +28,7 @@ contract WinPair{
     uint private s_balanceTokenA;
     uint private s_balanceTokenB;
     uint private s_k;
+    uint private s_amountOtherToken;
 
     /* mappings */
     mapping(address => uint) private s_balanceOfUser;
@@ -44,14 +45,11 @@ contract WinPair{
     }
 
     // should swap tokens based on user's input
-    function swap(address _tokenToBeSwapped, uint _amountOfToken)
-        public
-    {
+    function swap(address _tokenToBeSwapped, uint _amountOfToken) public {
         // require statements
         checkAmount(_amountOfToken);
         checkLiquidity();
 
-        uint amountOtherToken;
         uint initialTokenBalanceA = s_balanceTokenA;
         uint initialTokenBalanceB = s_balanceTokenB;
 
@@ -61,19 +59,22 @@ contract WinPair{
         // --> 4 * X = 25
         // --> X = 25 / 4
 
-        if(i_tokenA == _tokenToBeSwapped) {
-            require(s_balanceTokenA > _amountOfToken, "Not Enough liquidity for token");
+        if (i_tokenA == _tokenToBeSwapped) {
+            require(
+                s_balanceTokenA > _amountOfToken,
+                "Not Enough liquidity for token"
+            );
             s_balanceTokenA -= _amountOfToken;
             s_balanceTokenB = s_k / s_balanceTokenA;
-           amountOtherToken = s_balanceTokenB - initialTokenBalanceB;
-           
-        }
-        else{
-            require(s_balanceTokenB > _amountOfToken, "Not Enough liquidity for token");
-             s_balanceTokenB -= _amountOfToken;
+            s_amountOtherToken = s_balanceTokenB - initialTokenBalanceB;
+        } else {
+            require(
+                s_balanceTokenB > _amountOfToken,
+                "Not Enough liquidity for token"
+            );
+            s_balanceTokenB -= _amountOfToken;
             s_balanceTokenA = s_k / s_balanceTokenB;
-           amountOtherToken = s_balanceTokenA - initialTokenBalanceA;
-           
+            s_amountOtherToken = s_balanceTokenA - initialTokenBalanceA;
         }
 
         // send the number of tokens the user wants
@@ -84,20 +85,17 @@ contract WinPair{
         emit swappedTokens(s_tokenToBeSwapped, s_tokenToBeGiven);
 
         payLiquidityProviders();
-        
     }
 
-    // should pay trading fees to liquidity providers 
+    // should pay trading fees to liquidity providers
     function payLiquidityProviders() public payable {
         s_balanceOfUser[msg.sender] -= TRADING_FEE;
-        uint profit = TRADING_FEE /
-                s_liquidityProviders.length;
+        uint profit = TRADING_FEE / s_liquidityProviders.length;
         for (uint i = 0; i < s_liquidityProviders.length; i++) {
             // Figure out how to send trading fee to everyone based on number of WIN Tokens
             // you have
 
             s_balanceOfUser[s_liquidityProviders[i]] += profit;
-                
         }
         emit paidLiquidityProviders(profit);
     }
@@ -108,11 +106,9 @@ contract WinPair{
         checkAmount(_amountA);
         checkAmount(_amountB);
 
-       
         // require that there is no liquidity provider for this pair
         // -> can conclude that no one has deposited liquidity yet
         checkLiquidityProvidersExist();
-
 
         // update balance of tokens
         s_balanceTokenA += _amountA;
@@ -129,52 +125,51 @@ contract WinPair{
         emit liquiditySet(_amountA, _amountB);
     }
 
-    
     // should allow users to add liquidity for an existing pair
     function addLiquidity(uint _amount, address _token) external {
         checkAmount(_amount);
 
-        uint amountOtherToken;
         uint initialTokenBalanceA = s_balanceTokenA;
         uint initialTokenBalanceB = s_balanceTokenB;
 
-            // Logic for adding liquidity
-            //     x * y = k
-            // --> 5 * 5 = 25
-            // --> 7* X = 25
-            // --> X = 25 / 7
+        // Logic for adding liquidity
+        //     x * y = k
+        // --> 5 * 5 = 25
+        // --> 7* X = 25
+        // --> X = 25 / 7
 
-        if(i_tokenA == _token) {
+        if (i_tokenA == _token) {
             s_balanceTokenA += _amount;
             s_balanceTokenB = s_k / s_balanceTokenA;
-            amountOtherToken = initialTokenBalanceB - s_balanceTokenB;
-           
-        }
-        else{
+            s_amountOtherToken = initialTokenBalanceB - s_balanceTokenB;
+        } else {
             s_balanceTokenB += _amount;
             s_balanceTokenA = s_k / s_balanceTokenB;
-            amountOtherToken = initialTokenBalanceA - s_balanceTokenA;
+            s_amountOtherToken = initialTokenBalanceA - s_balanceTokenA;
         }
 
         // add the user to the liquidity providers array
         s_liquidityProviders.push(msg.sender);
 
         // emit liquidity added event
-        emit liquidityAdded(_amount, amountOtherToken);  
+        emit liquidityAdded(_amount, s_amountOtherToken);
     }
 
+    function getAmountOtherToken() external view returns (uint) {
+        return s_amountOtherToken;
+    }
 
     // should return the number of tokens we have for tokenA
-    function returnLiquidityTokenA() external view returns (uint) {
+    function getLiquidityTokenA() external view returns (uint) {
         return (s_balanceTokenA);
     }
 
     // should return the number of tokens we have for tokenB
-    function returnLiquidityTokenB() external view returns (uint) {
+    function getLiquidityTokenB() external view returns (uint) {
         return (s_balanceTokenB);
     }
 
-     function getTradingFee() external pure returns (uint) {
+    function getTradingFee() external pure returns (uint) {
         return TRADING_FEE;
     }
 
@@ -191,8 +186,8 @@ contract WinPair{
         if (s_balanceTokenA <= 0) {
             revert WinPair__NotEnoughLiquidityA(s_balanceTokenA);
         }
-        
-        if(s_balanceTokenB <= 0) {
+
+        if (s_balanceTokenB <= 0) {
             revert WinPair__NotEnoughLiquidityB(s_balanceTokenB);
         }
     }
@@ -200,7 +195,9 @@ contract WinPair{
     // should check if liquidity providers exist
     function checkLiquidityProvidersExist() internal view {
         if (s_liquidityProviders.length > 0) {
-            revert WinPair__LiquidityProvidersExist(s_liquidityProviders.length);
+            revert WinPair__LiquidityProvidersExist(
+                s_liquidityProviders.length
+            );
         }
     }
 
@@ -217,4 +214,3 @@ contract WinPair{
         }
     }
 }
-

@@ -7,9 +7,10 @@ const balance = ethers.utils.parseEther("10");
 devChains.includes(network.name)
   ? describe.skip
   : describe("WinPair", function () {
-      let winPair;
+      let winPair, winFactory;
       beforeEach(async function () {
-        const { deployer } = await getNamedmyAccounts();
+        const { deployer } = await getNamedAccounts();
+        winFactory = await ethers.getContract("WinFactory", deployer);
         winPair = await ethers.getContract("WinPair", deployer);
       });
       describe("swap", function () {
